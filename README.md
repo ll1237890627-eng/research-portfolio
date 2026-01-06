@@ -3,9 +3,9 @@
 This repository documents my undergraduate research projects, academic papers, and quantitative analysis work.
 
 ## Tools & Methods
-- MATLAB
-- Simulink
-- Quantitative modeling and numerical analysis
+- MATLAB (numerical analysis, data processing)
+- Simulink (system modeling and simulation)
+- Quantitative modeling
 - Experimental and simulation-based analysis
 
 ## Repository Structure
