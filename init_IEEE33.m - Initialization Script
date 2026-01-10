@@ -1,0 +1,68 @@
+%% init_IEEE33.m - Initialization of the IEEE 33-node system
+% Purpose: Load system parameters and set up the simulation environment
+% Run: Enter init_IEEE33 in the MATLAB command window 
+clear; clc;
+fprintf('========================================\n');
+fprintf('Initialization of the IEEE 33-node distribution system\n'); fprintf('========================================\n');
+
+%% 1. Loading system data
+fprintf('\n[1/5] Loading system data...') \n');
+[bus_data, line_data, load_data] = IEEE33_data();
+fprintf(' ✓ Number of buses: %d\n', size(bus_data, 1));
+fprintf(' ✓ Number of lines: %d\n', size(line_data, 1));
+fprintf(' ✓ Number of load nodes: %d\n', size(load_data, 1)); 
+%% 2. Define reference values
+fprintf('\n[2/5] Setting system reference values...') \n');
+Vbase = 12.66e3; % Reference voltage (V) Sbase = 1e6; % Base power (VA) = 1 MVA Ibase = Sbase/(sqrt(3)*Vbase); Reference Current Zbase = Vbase^2/Sbase; ✓ Voltage base: %.2f kV
+✓ Power base: %.2f MVA
+✓ Impedance base: %.4f Ω 
+%% 3. Convert to per-unit values
+fprintf('\n[3/5] Converting parameters to per-unit values...') \n');
+
+% Normalization of line parameters line_data_pu = line_data;
+line_data_pu(:, 3) = line_data(:, 3) / Zbase; % R per unit value line_data_pu(:, 4) = line_data(:, 4) / Zbase; % X per unit value 
+% Normalization of load parameters load_data_pu = load_data;
+load_data_pu(:, 2) = load_data(:, 2) * 1000 / Sbase; % P per unit value load_data_pu(:, 3) = load_data(:, 3) * 1000 / Sbase; % Q per unit value 
+fprintf('✓ Line parameter conversion completed\n');
+fprintf('✓ Load parameter conversion completed\n'); 
+%% 4. Simulation Parameter Settings
+fprintf('\n[4/5] Configuring simulation parameters...') \n');
+sim_params.stop_time = 2.0; % Simulation time (seconds) sim_params.solver = 'ode23tb'; Solver sim_params.max_step = 1e-4; Maximum step size sim_params.rel_tol = 1e-3; Relative tolerance percentage sim_params.frequency = 50; System frequency (Hz) sim_params.sample_time = 1e-5; % Sampling time 
+fprintf('✓ Simulation duration: %.1f s\n', sim_params.stop_time);
+fprintf('✓ Solver: %s\n', sim_params.solver);
+fprintf('✓ System frequency: %d Hz\n', sim_params.frequency); 
+%% 5. Create the line configuration structure
+fprintf('\n[5/5] Creating model configuration...') \n');
+
+Create independent parameters for each line. for i = 1:size(line_data_pu, 1) line_config(i).from_bus = line_data_pu(i, 1); line_config(i).to_bus = line_data_pu(i, 2); line_config(i).R_pu = line_data_pu(i, 3); line_config(i).X_pu = line_data_pu(i, 4); line_config(i).L = line_config(i).X_pu * Zbase / (2*pi*sim_params.frequency); line_config(i).R = line_config(i).R_pu * Zbase;
+end
+
+Create independent parameters for each load. for i = 1:size(load_data_pu, 1) load_config(i).bus = load_data_pu(i, 1); load_config(i).P_pu = load_data_pu(i, 2); load_config(i).Q_pu = load_data_pu(i, 3); load_config(i).P_W = load_data(i, 2) * 1000; load_config(i).Q_VAR = load_data(i, 3) * 1000;
+end
+
+fprintf('✓ Line configuration created successfully\n');
+fprintf('✓ Load configuration created successfully\n'); 
+%% 6. Save to Workspace and File
+fprintf('\nSaving parameters...') \n');
+save('IEEE33_parameters.mat', ... 'bus_data', 'line_data', 'load_data', ... 'line_data_pu', 'load_data_pu', ... 'line_config', 'load_config', ... 'Vbase', 'Sbase', 'Zbase', 'Ibase', ... 'sim_params');
+
+Also save to the base workspace for use by Simulink. assignin('base', 'Vbase', Vbase);
+assignin('base', 'Sbase', Sbase);
+assignin('base', 'Zbase', Zbase);
+assignin('base', 'line_config', line_config);
+assignin('base', 'load_config', load_config);
+assignin('base', 'sim_params', sim_params);
+
+fprintf('✓ Parameters have been saved to IEEE33_parameters.mat\n');
+fprintf('✓ Parameters have been loaded into the workspace\n'); 
+7. Display system statistics information fprintf('\n========================================\n');
+fprintf('System statistics information\n'); fprintf('========================================\n');
+total_P = sum(load_data(:, 2));
+total_Q = sum(load_data(:, 3));
+fprintf('Total active load: %.2f kW\n', total_P);
+fprintf('Total reactive load: %.2f kVar\n', total_Q);
+fprintf('Total apparent power: %.2f kVA\n', sqrt(total_P^2 + total_Q^2));
+fprintf('Power factor: %.4f\n', total_P/sqrt(total_P^2 + total_Q^2)); 
+fprintf('\n========================================\n');
+Initialization completed! \n');
+fprintf('Now the Simulink model can be run.\n'); fprintf('========================================\n\n');
